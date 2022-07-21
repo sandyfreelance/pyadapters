@@ -1,0 +1,87 @@
+# goal: SunPy DataFrame -> SpacePy SpaceData
+#       SunPy NDCube -> SpacePy SpaceData
+
+import spacepy.datamodel as datamodel
+
+# SpaceData is a dictionary-like object
+# dmarray is based on/like a numpy array
+position = datamodel.dmarray([1,2,3], attrs={'coord_system':'GSM'})
+
+# metadata in JSON-headed ASCII can go in datamodel.readJSONheadedASCII
+# requires DIMENSION and START_COLUMN as attribute nmes, recommends ISTP
+
+>>> import spacepy.datamodel as dm
+>>> mydata = dm.SpaceData(attrs={'MissionName': 'BigSat1'})
+>>> mydata['Counts'] = dm.dmarray([[42, 69, 77], [100, 200, 250]], attrs={'Units': 'cnts/s'})
+>>> mydata['Epoch'] = dm.dmarray([1, 2, 3], attrs={'units': 'minutes'})
+>>> mydata['OrbitNumber'] = dm.dmarray(16, attrs={'StartsFrom': 1})
+>>> mydata.attrs['PI'] 'Prof. Big Shot'
+
+>>> import spacepy.datamodel as dm
+>>> data = dm.SpaceData()
+>>> data.attrs['Global'] = 'A global attribute'
+>>> data['Var1'] = dm.dmarray([1,2,3,4,5], attrs={'Local1': 'A local attribute'})
+>>> data['Var2'] = dm.dmarray([[8,9],[9,1],[3,4],[8,9],[7,8]])
+>>> data['MVar'] = dm.dmarray([7.8], attrs={'Note': 'Metadata'})
+>>> dm.toJSONheadedASCII('outFile.txt', data, depend0='Var1', order=['Var1'])
+
+
+ugh, ndcube has dependencies on astropy, gwcs and numpy
+
+SunPy used cdflib for CDF and GenericTimeSeries can load a CDF file
+
+e.g.
+from sunpy.timeseries import GenericTimeSeries
+cdf_info = cdf.cdf_info()
+meta = cdf.globalattsget()
+all_var_keys = cdf_info['rVariables'] + cdf_info['zVariables']
+var_attrs = {key: cdf.varattsget(key) for key in all_var_keys}
+
+all_ts.append(GenericTimeSeries(data=df, units=units, meta=meta))
+
+# problem, class inheritance https://docs.sunpy.org/en/stable/code_ref/timeseries.html
+genericTimeSeries children include ESP EVESpWx GBMSummary LYRA NOAAIndices NOAAPredictIndices NoRH RHESSISummary XRS
+
+**********************
+GenericTimeSeries has:
+data (pandas.DataFrame or numpy.array) with 1 or more fields as a function of time
+meta (optional, defaults to None)
+units (dict, optional, maps column names to physical units)
+
+times = parse_time("now") - TimeDelta(np.arange(24 * 60)*u.minute)
+intensity = np.sin(np.arange(0, 12 * np.pi, step=(12 * np.pi) / (24 * 60)))
+df = pd.DataFrame(intensity, index=times, columns=['intensity'])
+header = {}
+units = {'intensity': u.W/u.m**2}
+ts = TimeSeries(df, header, units)
+
+Methods of use:
+add_column(colname, quantity, [unit]) returns a new timeseries
+
+to_array(**kwargs) returns a numpy.array of a given TimeSeries
+to_dataframe(**kwargs) dito
+Note that a pandas.DataFrame is a 2-D size-mutable potentially heterogenous tabular data taking input of data: ndarray or iterable or dict or DataFrame, if a dict can contain a series or list-like object
+pandas series to a dataframe is df=myseries.to_frame() or =pd.DataFrame(myseries)
+
+base = datetime.datetime.today()
+dates = Time(base) - TimeDelta(np.arange(24 * 60)*u.minute)
+intensity = np.sin(np.arange(0, 12 * np.pi, ((12 * np.pi) / (24 * 60))))
+# Create the data DataFrame, header MetaDict and units OrderedDict
+data = DataFrame(intensity, index=dates, columns=['intensity'])
+units = OrderedDict([('intensity', u.W / u.m**2)])
+meta = MetaDict({'key': 'value'})
+# Create the time series
+ts_custom = sunpy.timeseries.TimeSeries(data, meta, units)
+
+
+See also https://spacepy.github.io/autosummary/spacepy.datamodel.SpaceData.html
+
+Meanwhile, over in SpacePy:
+>>> import spacepy.datamodel as dm
+>>> mydata = dm.SpaceData(attrs={'MissionName': 'BigSat1'})
+>>> mydata['Counts'] = dm.dmarray([[42, 69, 77], [100, 200, 250]], attrs={'Units': 'cnts/s'})
+>>> mydata['Epoch'] = dm.dmarray([1, 2, 3], attrs={'units': 'minutes'})
+>>> mydata['OrbitNumber'] = dm.dmarray(16, attrs={'StartsFrom': 1})
+>>> mydata.attrs['PI'] 'Prof. Big Shot'
+
+
