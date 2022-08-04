@@ -1,0 +1,10 @@
+# Converts a SunPy Timeseries object into the HAPI python client data, meta
+
+import numpy as np
+
+
+
+
+# for testing
+import hapiplot
+hapiplot(data,meta)

@@ -1,5 +1,18 @@
-# Antunes Jul 21 PyAdapters project
-# APL, sandy.antunes@jhuapl.edu
+""" Antunes Jul 21 PyAdapters project
+ APL, sandy.antunes@jhuapl.edu
+
+ Intent is the 'fromSunPy' to SpacePy and/or HAPI datamodel adapters
+ This code has 2 functions so far:
+
+ 'TimeSeriesToSpaceData()' takes a SunPy 'TimeSeries' data object
+ and converts it to a SpacePy 'SpaceData' object.
+
+ 'NDCubeToSpaceData()' takes a SunPy 'NDCube' data object
+ and converts it to a SpacePy 'SpaceData' object.
+
+ Testing is via 'sunpy_timeseries_tests.py'
+
+"""
 
 import spacepy
 
@@ -33,7 +46,6 @@ def TimeSeriesToSpaceData(ts):
 
     asd = spacepy.datamodel.SpaceData()
 
-    
     for colname in cols:
         asd[colname] = ts.data[colname]
 
@@ -67,7 +79,8 @@ def mapToSpaceData(sunmap):
     #     optional uncertainty, mask, wcs, meta & unit
 
     asd = ndcubeToSpaceData(sunmap, sunmap.header, sunmap.plot_settings)
-    
+    return(asd)
+
 def ndcubeToSpaceData(nd, header=None, plot_settings=None):
 
     # core data: single numpy ndarray of data + WCS transformations

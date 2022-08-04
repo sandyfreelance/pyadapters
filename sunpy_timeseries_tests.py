@@ -13,8 +13,14 @@ import spacepy.plot as splot
     That can load sample SunPy data (TimeSeries, NDCube/Map) then
     load into a SpaceData object
 
+    usage: python sunpy_timeseries_tests.py [optional_dataset_tag]
 
-    Still needs verified for SpaceData
+    optional_dataset_tag is any of the existing SunPy data samples:
+       ESP, EVE, GBM, LYRA, NOAAIndices, NOAAPredict, NoRH, RHESSI, XRS
+       or 'all' (all of the above)
+    default is 'generic', a simple sine wave
+
+    Still needs verifier for SpaceData
 """
 
 
@@ -35,7 +41,7 @@ def loadsamples(name):
     import astropy.units as u
     import numpy as np
     import pandas as pd
-    
+
     if name == "ESP" or name == "generic":
         if name == "ESP":
             print("No standard ESP test data yet, making a generic timeseries")
@@ -176,3 +182,8 @@ spacetest=pyadapters.TimeSeriesToSpaceData(suntest)
 sunpy_info(suntest)
 spacedata_info(spacetest)
 """
+
+suntest=loadsamples(choice)
+spacetest=pyadapters.TimeSeriesToSpaceData(suntest)
+sunpy_info(suntest)
+spacedata_info(spacetest)
