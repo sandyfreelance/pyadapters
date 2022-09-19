@@ -5,7 +5,7 @@ import sunpy.data.sample
 from sunpy.timeseries import TimeSeries as ts
 import sunpy.timeseries
 
-import pyadapters # TimeSeriesToSpaceData, NDCUBE_to_SpaceData
+import fromSunPyToSpacePy as s2s # TimeSeriesToSpaceData, NDCUBE_to_SpaceData
 
 import spacepy.plot as splot
 
@@ -41,7 +41,9 @@ def loadsamples(name):
     import astropy.units as u
     import numpy as np
     import pandas as pd
-
+    
+    print("Loading ",name)
+    
     if name == "ESP" or name == "generic":
         if name == "ESP":
             print("No standard ESP test data yet, making a generic timeseries")
@@ -91,7 +93,7 @@ def looptest(ts):
     from spacedata_to_timeseries import spacedata_to_timeseries
     # Simple test of TimeSeries -> SpaceData -> SpaceData
     # converts a ts to an sd, then converts back, then compares
-    spacepyvar = pyadapters.TimeSeriesToSpaceData(test)
+    spacepyvar = s2s.TimeSeriesToSpaceData(test)
     newts = spacedata_to_timeseries(spacepyvar)
 
     ts.peek()
@@ -156,15 +158,16 @@ def alltests(choice):
 
     sample_data=['generic','ESP','EVE','GBM','LYRA',
                  'NOAAIndices','NOAAPredict','NoRH','RHESSI','XRS']
-
+    print("Testing with ",choice)
+    
     if choice == 'all':
         choices = sample_data
     elif choice in sample_data:
         choices = [choice]
     
     for sd in choices:
-        test=loadsamples(sd)
-        spacepyvar = pyadapters.TimeSeriesToSpaceData(test)
+        suntest=loadsamples(sd)
+        spacetest = s2s.TimeSeriesToSpaceData(suntest)
         sunpy_info(suntest)
         spacedata_info(spacetest)
         #spacepyvar.tree()
@@ -178,12 +181,10 @@ def alltests(choice):
 # sample test for cut-and-paste use
 from sunpy_timeseries_tests import *
 suntest=loadsamples('RHESSI')
-spacetest=pyadapters.TimeSeriesToSpaceData(suntest)
+spacetest=s2s.TimeSeriesToSpaceData(suntest)
 sunpy_info(suntest)
 spacedata_info(spacetest)
 """
 
-suntest=loadsamples(choice)
-spacetest=pyadapters.TimeSeriesToSpaceData(suntest)
-sunpy_info(suntest)
-spacedata_info(spacetest)
+alltests(choice)
+
