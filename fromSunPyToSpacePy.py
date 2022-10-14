@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """ Antunes Jul 21 PyAdapters project
  APL, sandy.antunes@jhuapl.edu
 
@@ -31,38 +33,41 @@ mySpaceData = ndcubeToSpaceData(SunPy_Map)
 
 
 def TimeSeriesToSpaceData(ts):
-    # core data: data (a pandas.DataFrame or numpy.array)
-    # optional: meta (TimeSeriesMetaData obj or 'None')
-    #      and units (dict or 'None')
+    """
+    core data: data (a pandas.DataFrame or numpy.array)
+    optional: meta (TimeSeriesMetaData obj or 'None')
+         and units (dict or 'None')
 
-
-    # although you can access 'ts.data' directly, recommended is to
-    # use ts.to_dataframe()
+    although you can access 'ts.data' directly, recommended is to
+    use ts.to_dataframe() so it handles the internal data best,
+    since dataframes can be made from numpy, pandas, tables, etc.
+    """
+    
     data = ts.to_dataframe()
     cols = ts.data.columns
 
     #x=ts.data.index
     #y=ts.data.values
 
-    asd = spacepy.datamodel.SpaceData()
+    a_sd = spacepy.datamodel.SpaceData()
 
     for colname in cols:
-        asd[colname] = ts.data[colname]
+        a_sd[colname] = ts.data[colname]
 
-    asd.attrs = ts.meta
+    a_sd.attrs = ts.meta
     #if ts.meta != None:
     #    # TimeSeriesMetaData exists
     #    #    meta = dict, MetaDict, tuple or list, defaults to None
     #    #    timerange is a TimeRange type, defaults to None
     #    #    colnames is a list, defaults to None
-    #    asd['meta'] = ts.meta.meta
-    #    asd['timerange'] = ts.data.meta.timerange
-    #    asd['colnames'] = ts.data.meta.colnames
+    #    a_sd['meta'] = ts.meta.meta
+    #    a_sd['timerange'] = ts.data.meta.timerange
+    #    a_sd['colnames'] = ts.data.meta.colnames
         
     if ts.units != None:
-        asd['units'] = ts.units
+        a_sd['units'] = ts.units
 
-    return(asd)
+    return a_sd
 
 
 # Note SunPy 'map' and 'ndcube' are nearly identical, with 'ndcube'
@@ -78,8 +83,8 @@ def mapToSpaceData(sunmap):
     # basis is the astropy.nddata container for data that also includes
     #     optional uncertainty, mask, wcs, meta & unit
 
-    asd = ndcubeToSpaceData(sunmap, sunmap.header, sunmap.plot_settings)
-    return(asd)
+    a_sd = ndcubeToSpaceData(sunmap, sunmap.header, sunmap.plot_settings)
+    return a_sd
 
 def ndcubeToSpaceData(nd, header=None, plot_settings=None):
 
@@ -103,21 +108,21 @@ def ndcubeToSpaceData(nd, header=None, plot_settings=None):
     units = nd.units # string for the entire dataset, def None
     extra_coords = nd.extra_coords # (name, axis and array-or-obj of values)
    
-    asd = spacepy.datamodel.SpaceData()
+    a_sd = spacepy.datamodel.SpaceData()
 
-    asd['data']=data
-    asd['wcs']=wcs
-    if uncert != None: asd['uncert']=uncert
-    if mask != None: asd['mask']=mask
-    if meta != None: asd['meta']=meta
-    if units != None:  asd['units']=units
-    if extra_coords != None: asd['extra_coords']=extra_coords
+    a_sd['data']=data
+    a_sd['wcs']=wcs
+    if uncert != None: a_sd['uncertainty']=uncert
+    if mask != None: a_sd['mask']=mask
+    if meta != None: a_sd['meta']=meta
+    if units != None:  a_sd['units']=units
+    if extra_coords != None: a_sd['extra_coords']=extra_coords
 
     # these next 2 are only used for the map (not ndcube) class
-    if header != None: asd['header']=header
-    if plot_settings != None: asd['plot_settings']=plot_settings
+    if header != None: a_sd['header']=header
+    if plot_settings != None: a_sd['plot_settings']=plot_settings
 
-    #asd.attrs = ????
+    #a_sd.attrs = ????
 
-    return(asd)
+    return a_sd
     

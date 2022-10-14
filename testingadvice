@@ -1,0 +1,13 @@
+(top level)
+python setup.py build
+
+(in tests)
+python test_all.py
+
+(or test_datamodel, etc.)
+
+python test_datamodel.py
+converterTests.test_toHDF5ListString
+
+python test_datamodel.py
+converterTests
