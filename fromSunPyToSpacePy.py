@@ -32,40 +32,72 @@ mySpaceData = ndcubeToSpaceData(SunPy_Map)
 """
 
 
-def TimeSeriesToSpaceData(ts):
+def TimeSeriesToSpaceData(sample):
     """
     core data: data (a pandas.DataFrame or numpy.array)
     optional: meta (TimeSeriesMetaData obj or 'None')
          and units (dict or 'None')
 
-    although you can access 'ts.data' directly, recommended is to
-    use ts.to_dataframe() so it handles the internal data best,
+    although you can access 'sample.data' directly, recommended is to
+    use sample.to_dataframe() so it handles the internal data best,
     since dataframes can be made from numpy, pandas, tables, etc.
     """
     
-    data = ts.to_dataframe()
-    cols = ts.data.columns
+    import spacepy
 
-    #x=ts.data.index
-    #y=ts.data.values
 
-    a_sd = spacepy.datamodel.SpaceData()
+    #### SunPy warns to not use .data in favor of to_dataframe()
+    #### but this is contentious-- https://github.com/sunpy/sunpy/issues/4622
 
-    for colname in cols:
-        a_sd[colname] = ts.data[colname]
+    label = sample.source # e.g. 'xrs'
+    # Many but not all SunPy objects are from FITS, which has rich metadata
+    # attrs for entire dataset, extracting FITS headers
+    try:
+        fitshdr = sample.meta.metadata[0][2]
+    except:
+        fitshdr = {}
+    # common keys, if needed, are bitpix, naxis, extend, date,
+    # telescop, instrume, object, origin,
+    # date-obs, time-obs, date-end, time-end, comment, history
+    # also a dup of hdrs called 'keycomments' for some reason
+    temp = {'CATDESC': label, 'VAR_TYPE': 'metadata'}
+    for mykey in fitshdr.keys():
+        temp[mykey] = fitshdr[mykey]
+    if 'keycomments' in temp: del temp['keycomments']
+    a_sd = spacepy.SpaceData(attrs=temp)
+    
+    a_sd['Epoch'] = spacepy.dmarray(sample.index,
+                                    attrs = {'DISPLAY_TYPE': 'time_series',
+                                             'VAR_TYPE': 'support_data',
+                                             'FIELDNAM': 'epoch',
+                                             'FORMAT': 'I22',
+                                             'LABLAXIS': 'Epoch',
+                                             'MONOTON': 'INCREASE'})
 
-    a_sd.attrs = ts.meta
-    #if ts.meta != None:
-    #    # TimeSeriesMetaData exists
-    #    #    meta = dict, MetaDict, tuple or list, defaults to None
-    #    #    timerange is a TimeRange type, defaults to None
-    #    #    colnames is a list, defaults to None
-    #    a_sd['meta'] = ts.meta.meta
-    #    a_sd['timerange'] = ts.data.meta.timerange
-    #    a_sd['colnames'] = ts.data.meta.colnames
-        
-    if ts.units != None:
-        a_sd['units'] = ts.units
+    #hdr = sample.meta.metadata[0][2]['keycomments'] # hash of FITS hdr rehash
+    # hdr = sample.meta.metadata[0][2] # hash of FITS hdr
+    # not using hdr['telescop'] or hdr['instrume'] yet
+    for id in sample.columns:
+        print("Debug, adding spacedata element ",id)
+        a_sd[id] = spacepy.dmarray(sample.data[id].to_numpy())
+        a_sd[id].attrs = {'CATDESC': id,
+                          'DEPEND_0': 'Epoch',
+                          'object': sample.observatory,
+                          'DISPLAY_TYPE': 'time_series',
+                          'VAR_TYPE': 'data',
+                          'FIELD_NAME': id,
+                          'UNITS': sample.units[id]}
+        if len(sample.data[id].shape) > 1:
+            # is not 1-D, so needs a 2nd axis of indices
+            nele = list(range(1, 1+sample.data[id].shape[1]))
+            indexname = 'index_'+id
+            a_sd[indexname]=spacepy.dmarray(nindices,
+                            attrs={'CATDESC': str(nele)+'vect',
+                                   'FIELDNAM': str(nele)+'vect',
+                                   'FORMAT': 'I10',
+                                   'UNITS': sample.units[id],
+                                   'VAR_TYPE': 'metadata'})
+            a_sd['id'].attrs['DEPEND_1'] = indexname
 
     return a_sd
 

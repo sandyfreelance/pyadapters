@@ -171,7 +171,8 @@ def alltests(choice):
         sunpy_info(suntest)
         spacedata_info(spacetest)
         #spacepyvar.tree()
-
+        import spacepy.pycdf as pycdf
+        pycdf.CDF.from_data(sd+'_spacepy.cdf',spacetest)
 
 # generic = 1D
 # RHESSI = for each time, 9 columns
