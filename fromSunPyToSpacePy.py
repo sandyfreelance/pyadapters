@@ -31,16 +31,11 @@ mySpaceData = ndcubeToSpaceData(SunPy_Map)
 
 """
 
-
 def TimeSeriesToSpaceData(sample):
     """
-    core data: data (a pandas.DataFrame or numpy.array)
+    core data: data (a pandas dataframe)
     optional: meta (TimeSeriesMetaData obj or 'None')
          and units (dict or 'None')
-
-    although you can access 'sample.data' directly, recommended is to
-    use sample.to_dataframe() so it handles the internal data best,
-    since dataframes can be made from numpy, pandas, tables, etc.
     """
     
     import spacepy

@@ -6,6 +6,7 @@ from sunpy.timeseries import TimeSeries as ts
 import sunpy.timeseries
 
 import fromSunPyToSpacePy as s2s # TimeSeriesToSpaceData, NDCUBE_to_SpaceData
+import fromSunPyToHAPI as s2h # TimeSeriesToHAPI
 
 import spacepy.plot as splot
 
@@ -28,6 +29,11 @@ try:
     choice = sys.argv[1]
 except:
     choice = 'generic' # default to a single item
+
+try:
+    converter = sys.argv[2] # currently can be 'spacepy' or 'hapi'
+except:
+    converter = 'spacepy' # default to spacepy
 
 print("Analyzing ",choice)
 
@@ -89,12 +95,22 @@ def loadsamples(name):
     return(sample)
 
 
-def looptest(ts):
+def looptestSpacePy(ts):
     from spacedata_to_timeseries import spacedata_to_timeseries
     # Simple test of TimeSeries -> SpaceData -> SpaceData
     # converts a ts to an sd, then converts back, then compares
     spacepyvar = s2s.TimeSeriesToSpaceData(test)
     newts = spacedata_to_timeseries(spacepyvar)
+
+    ts.peek()
+    newts.peek()
+
+def looptestHAPI(ts):
+    from hapi_to_timeseries import hapi_to_timeseries
+    # Simple test of TimeSeries -> SpaceData -> SpaceData
+    # converts a ts to an sd, then converts back, then compares
+    spacepyvar = s2h.TimeSeriesToSpaceData(test)
+    newts = hapi_to_timeseries(spacepyvar)
 
     ts.peek()
     newts.peek()
@@ -154,11 +170,11 @@ def spacedata_info(test):
 
 # The actual test code
 
-def alltests(choice):
+def alltests(choice,converter="spacepy"):
 
     sample_data=['generic','ESP','EVE','GBM','LYRA',
                  'NOAAIndices','NOAAPredict','NoRH','RHESSI','XRS']
-    print("Testing with ",choice)
+    print("Testing with ",choice," for ",converter)
     
     if choice == 'all':
         choices = sample_data
@@ -167,12 +183,19 @@ def alltests(choice):
     
     for sd in choices:
         suntest=loadsamples(sd)
-        spacetest = s2s.TimeSeriesToSpaceData(suntest)
         sunpy_info(suntest)
-        spacedata_info(spacetest)
-        #spacepyvar.tree()
-        import spacepy.pycdf as pycdf
-        pycdf.CDF.from_data(sd+'_spacepy.cdf',spacetest)
+        if converter == "spacepy":
+            spacetest = s2s.TimeSeriesToSpaceData(suntest)
+            spacedata_info(spacetest)
+            #spacepyvar.tree()
+            import spacepy.pycdf as pycdf
+            pycdf.CDF.from_data(sd+'_spacepy.cdf',spacetest)
+        elif converter == "hapi":
+            hapidata, hapimeta = s2h.TimeSeriesToHAPI(suntest)
+            print("HAPI meta: ", hapimeta)
+            print(hapidata[0:1000])
+            import hapiplot
+            hapiplot.hapiplot(hapidata,hapimeta)
 
 # generic = 1D
 # RHESSI = for each time, 9 columns
@@ -187,5 +210,5 @@ sunpy_info(suntest)
 spacedata_info(spacetest)
 """
 
-alltests(choice)
+alltests(choice,converter)
 
