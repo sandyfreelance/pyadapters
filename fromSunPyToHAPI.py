@@ -33,8 +33,16 @@ def TimeSeriesToHAPI(sample):
     #### but this is contentious-- https://github.com/sunpy/sunpy/issues/4622
 
     # First let us grab the data and format as csv
+    #hapidata = sample.data.to_csv(header=False,date_format='%d-%m-%YT%H:%M:%S.%fZ')
+    print("Raw data is: ",dir(sample.data))
     hapidata = sample.data.to_csv(header=False,date_format='%d-%m-%YT%H:%M:%S.%fZ')
-    
+    #hapidata = sample.to_table()
+    #print("CSV datat is: ",dir(hapidata),"First elements are:")
+    hapidata=hapidata.split('\n')
+    hapidata = [ele.split(',') for ele in hapidata]
+    hapidata = np.array(hapidata)
+    print("\n",hapidata[0:5],"\n")
+
     # Now create the HAPI metadata
     
     label = sample.source # e.g. 'xrs'
@@ -72,13 +80,15 @@ def TimeSeriesToHAPI(sample):
         
         hapimeta["parameters"].append(metasingle)
 
-
+    import pickle
+    with open('hapimeta.sav','wb') as f: pickle.dump(hapimeta,f)
+    with open('hapimeta2.sav','wb') as f: pickle.dump(hapidata,f)
+            
     #import json
     #hapimeta = str(json.dumps(hapimeta,indent=4))
     # convert dictionary to json string
     hapimeta = str(hapimeta).replace('\'','"')
     print("\n",hapimeta,"\n")
-
     print(hapimeta)
-    
+
     return hapidata, hapimeta

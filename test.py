@@ -72,16 +72,9 @@ with open('sunpy_pickle.sav','rb') as f:
 
 # or
 
-sd['Epoch'] = spacepy.dmarray(sample.index,
-                              attrs = {'DISPLAY_TYPE': 'time_series',
-                                       'VAR_TYPE': 'support_data',
-                                       'FIELDNAM': 'epoch',
-                                       'FORMAT': 'I22',
-                                       'LABLAXIS': 'Epoch',
-                                       'MONOTON': 'INCREASE'})
-
+"""
 # sample for e.g. a 3-vect.  Skip for 1-vects
-sd['xrs_index']=spacepy.dmarray([1,2,3],
+sd['index']=spacepy.dmarray([1,2,3],
                                   attrs={'CATDESC': 'index for B coords',
                                          'FIELDNAM': 'index for B coords',
                                          'FORMAT': 'I10',
@@ -95,12 +88,78 @@ sd['label_SC']=spacepy.dmarray(
            'FORMAT': 'A3',
            'UNITS': ' ',
            'VAR_TYPE': 'metadata'})
-
+"""
 # could do each as its own, or as a 2-vect
 #### SunPy warns to not use .data in favor of to_dataframe()
 #### but this is contentious-- https://github.com/sunpy/sunpy/issues/4622
 ###sd['xrs']=spacepy.dmarray([sample.data['xrsa'].to_numpy(),sample.data['xrsb'].to_numpy()])
-sd['xrs']=spacepy.dmarray([sample.data['xrsa'].to_numpy(),sample.data['xrsb'].to_numpy()])
+
+label = sample.source # e.g. 'xrs'
+
+## Method 1: all data in one dmarray
+## Not what we will use, as typically each data item may have different
+## sizes or units
+"""
+method = 2
+if method == 1:
+    temp = []
+    for id in sample.columns:
+        temp.append(sample.data[id].to_numpy())
+    sd[label] = spacepy.dmarray(temp)
+   
+    sd[label].attrs = {'CATDESC': sample.observatory,
+                       'DEPEND_0': 'Epoch',
+                       'DEPEND_1': 'index',
+                       'object': 'Sun',
+                       'DISPLAY_TYPE': 'time_series',
+                       'VAR_TYPE': 'data',
+                       'FIELD_NAME': label,
+                       'UNITS': sample.units}
+
+else:
+"""
+sd['Epoch'] = spacepy.dmarray(sample.index,
+                              attrs = {'DISPLAY_TYPE': 'time_series',
+                                       'VAR_TYPE': 'support_data',
+                                       'FIELDNAM': 'epoch',
+                                       'FORMAT': 'I22',
+                                       'LABLAXIS': 'Epoch',
+                                       'MONOTON': 'INCREASE'})
+
+# FITS headers, in case needed
+fitshdr = sample.meta.metadata[0][2]
+fitskeys = fitshdr.keys()
+# common keys, if needed, are bitpix, naxis, extend, date,
+# telescop, instrume, object, origin,
+# date-obs, time-obs, date-end, time-end, comment, history
+
+#hdr = sample.meta.metadata[0][2]['keycomments'] # hash of FITS hdr rehash
+# hdr = sample.meta.metadata[0][2] # hash of FITS hdr
+# not using hdr['telescop'] or hdr['instrume'] yet
+for id in sample.columns:
+    sd[id] = spacepy.dmarray(sample.data[id].to_numpy())
+    sd[id].attrs = {'CATDESC': id,
+                    'DEPEND_0': 'Epoch',
+                    'object': sample.observatory,
+                    'DISPLAY_TYPE': 'time_series',
+                    'VAR_TYPE': 'data',
+                    'FIELD_NAME': id,
+                    'UNITS': sample.units[id]}
+    if len(sample.data[id].shape) > 1:
+        # is not 1-D, so needs a 2nd axis of indices
+        nele = list(range(1, 1+sample.data[id].shape[1]))
+        indexname = 'index_'+id
+        sd[indexname]=spacepy.dmarray(nindices,
+                                      attrs={'CATDESC': str(nele)+'vect',
+                                             'FIELDNAM': str(nele)+'vect',
+                                             'FORMAT': 'I10',
+                                             'UNITS': sample.units[id],
+                                             'VAR_TYPE': 'metadata'})
+        sd['id'].attrs['DEPEND_1'] = indexname
+
+        
+    
+#sd['xrs']=spacepy.dmarray([sample.data['xrsa'].to_numpy(),sample.data['xrsb'].to_numpy()])
 
 
 # ALSO make sure the above is a numpy array, if not cast it to that
@@ -115,6 +174,7 @@ sd['xrs']=spacepy.dmarray([sample.data['xrsa'].to_numpy(),sample.data['xrsb'].to
 #sd['xrs'].attrs['DEPEND_1']='xrs_index'
 
                           
+"""
 # or
 sd['xrs'].attrs = {'CATDESC': 'Magnetic field in SC coordinntes (1 min cadence)',
                    'DEPEND_0': 'Epoch',
@@ -131,7 +191,7 @@ sd['xrs'].attrs = {'CATDESC': 'Magnetic field in SC coordinntes (1 min cadence)'
                    'SI_conv': '1.0e-9->Tesla',
                    'UNITS': 'nT', # also VALIDMAX, VALIDMIN lists of same size?
                    }
-
+"""
                  
 print(sd)
 print(dir(sd))

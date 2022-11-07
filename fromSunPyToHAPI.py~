@@ -1,18 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import spacepy
-
-"""[Summary]
-
-:param [ParamName]: [ParamDescription], defaults to [DefaultParamVal]
-:type [ParamName]: [ParamType](, optional)
-...
-:raises [ErrorType]: [ErrorDescription]
-...
-:return: [ReturnDescription]
-:rtype: [ReturnType]
-"""
-
 """ Antunes Jul 21 PyAdapters project
  APL, sandy.antunes@jhuapl.edu
 
@@ -29,6 +16,8 @@ import spacepy
 
 """
 
+import spacepy
+
 # REMOVE FOR ACTUAL DEV USE!!!
 #import shutup; shutup.please()
 
@@ -42,13 +31,21 @@ mySpaceData = ndcubeToSpaceData(SunPy_Map)
 
 """
 
+
 def TimeSeriesToSpaceData(sample):
     """
-    core data: data (a pandas dataframe)
+    core data: data (a pandas.DataFrame or numpy.array)
     optional: meta (TimeSeriesMetaData obj or 'None')
          and units (dict or 'None')
+
+    although you can access 'sample.data' directly, recommended is to
+    use sample.to_dataframe() so it handles the internal data best,
+    since dataframes can be made from numpy, pandas, tables, etc.
     """
     
+    import spacepy
+
+
     #### SunPy warns to not use .data in favor of to_dataframe()
     #### but this is contentious-- https://github.com/sunpy/sunpy/issues/4622
 
@@ -65,7 +62,7 @@ def TimeSeriesToSpaceData(sample):
     # also a dup of hdrs called 'keycomments' for some reason
     temp = {'CATDESC': label, 'VAR_TYPE': 'metadata'}
     for mykey in fitshdr.keys():
-        temp[mykey] = fitshdr[mykey]
+        temp[mykey] = fitshdr[mykey]/Users/antunak1/gits/pyadapters 
     if 'keycomments' in temp: del temp['keycomments']
     a_sd = spacepy.SpaceData(attrs=temp)
     
@@ -80,17 +77,12 @@ def TimeSeriesToSpaceData(sample):
     #hdr = sample.meta.metadata[0][2]['keycomments'] # hash of FITS hdr rehash
     # hdr = sample.meta.metadata[0][2] # hash of FITS hdr
     # not using hdr['telescop'] or hdr['instrume'] yet
-        for id in sample.columns:
+    for id in sample.columns:
         print("Debug, adding spacedata element ",id)
         a_sd[id] = spacepy.dmarray(sample.data[id].to_numpy())
-        try:
-            obs = sample.observatory
-        except:
-            # lacks 'observatory' keyword, go with a default
-            obs = id
         a_sd[id].attrs = {'CATDESC': id,
                           'DEPEND_0': 'Epoch',
-                          'object': obs,
+                          'object': sample.observatory,
                           'DISPLAY_TYPE': 'time_series',
                           'VAR_TYPE': 'data',
                           'FIELD_NAME': id,
@@ -142,7 +134,7 @@ def ndcubeToSpaceData(nd, header=None, plot_settings=None):
     wcs = ns.wcs # astroPy wcs object
     
     # optional supplementary data
-    uncertainty = nd.uncertainty # any type, def None
+    uncert = nd.uncertainty # any type, def None
     mask = nd.mask   # any type, def None
     meta = nd.meta   # dict-like object, def None
     units = nd.units # string for the entire dataset, def None
@@ -152,7 +144,7 @@ def ndcubeToSpaceData(nd, header=None, plot_settings=None):
 
     a_sd['data']=data
     a_sd['wcs']=wcs
-    if uncertainty != None: a_sd['uncertainty']=uncertainty
+    if uncert != None: a_sd['uncertainty']=uncert
     if mask != None: a_sd['mask']=mask
     if meta != None: a_sd['meta']=meta
     if units != None:  a_sd['units']=units
